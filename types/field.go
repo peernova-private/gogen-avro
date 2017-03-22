@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
 )
 
 /*

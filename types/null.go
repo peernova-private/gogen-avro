@@ -1,7 +1,8 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
+	"fmt"
 )
 
 const writeNullMethod = `
@@ -19,6 +20,7 @@ func readNull(_ io.Reader) (interface{}, error) {
 type nullField struct {
 	name       string
 	hasDefault bool
+	tag        string
 }
 
 func (s *nullField) HasDefault() bool {
@@ -42,7 +44,7 @@ func (s *nullField) FieldType() string {
 }
 
 func (s *nullField) GoType() string {
-	return "interface{}"
+	return fmt.Sprintf("interface{}%s", s.Tag())
 }
 
 func (s *nullField) SerializerMethod() string {
@@ -71,4 +73,11 @@ func (s *nullField) ResolveReferences(n *Namespace) error {
 
 func (s *nullField) Schema(names map[QualifiedName]interface{}) interface{} {
 	return "null"
+}
+
+func (s *nullField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

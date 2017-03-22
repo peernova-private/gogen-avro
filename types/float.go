@@ -1,7 +1,8 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
+	"fmt"
 )
 
 const writeFloatMethod = `
@@ -58,6 +59,7 @@ type floatField struct {
 	name         string
 	defaultValue float32
 	hasDefault   bool
+	tag			 string
 }
 
 func (s *floatField) HasDefault() bool {
@@ -81,7 +83,7 @@ func (s *floatField) FieldType() string {
 }
 
 func (s *floatField) GoType() string {
-	return "float32"
+	return fmt.Sprintf("float32%s", s.Tag())
 }
 
 func (s *floatField) SerializerMethod() string {
@@ -115,4 +117,11 @@ func (s *floatField) ResolveReferences(n *Namespace) error {
 
 func (s *floatField) Schema(names map[QualifiedName]interface{}) interface{} {
 	return "float"
+}
+
+func (s *floatField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

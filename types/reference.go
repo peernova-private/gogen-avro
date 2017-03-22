@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
 )
 
 /*
@@ -15,6 +15,7 @@ type Reference struct {
 	def          Definition
 	defaultValue interface{}
 	hasDefault   bool
+	tag          string
 }
 
 func (s *Reference) HasDefault() bool {
@@ -78,4 +79,11 @@ func (s *Reference) ResolveReferences(n *Namespace) error {
 		return s.def.ResolveReferences(n)
 	}
 	return nil
+}
+
+func (s *Reference) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

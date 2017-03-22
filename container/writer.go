@@ -2,10 +2,10 @@
 package container
 
 import (
-	"github.com/alanctgardner/gogen-avro/container/avro"
 	"bytes"
 	"compress/flate"
 	"io"
+	"github.com/peernova-private/gogen-avro/container/avro"
 )
 
 /*

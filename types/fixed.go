@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
 )
 
 const writeFixedMethod = `
@@ -25,6 +25,7 @@ type FixedDefinition struct {
 	aliases   []QualifiedName
 	sizeBytes int
 	metadata  map[string]interface{}
+	tag       string
 }
 
 func (s *FixedDefinition) AvroName() QualifiedName {
@@ -96,4 +97,11 @@ func (s *FixedDefinition) Schema(names map[QualifiedName]interface{}) interface{
 		"name": name,
 		"size": s.sizeBytes,
 	}, s.metadata)
+}
+
+func (s *FixedDefinition) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

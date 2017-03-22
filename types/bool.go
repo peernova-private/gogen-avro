@@ -1,7 +1,8 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
+	"fmt"
 )
 
 const byteWriterInterface = `
@@ -62,6 +63,7 @@ type boolField struct {
 	name         string
 	defaultValue bool
 	hasDefault   bool
+	tag          string
 }
 
 func (s *boolField) AvroName() string {
@@ -85,7 +87,7 @@ func (s *boolField) FieldType() string {
 }
 
 func (s *boolField) GoType() string {
-	return "bool"
+	return fmt.Sprintf("bool%s", s.Tag())
 }
 
 func (s *boolField) SerializerMethod() string {
@@ -116,4 +118,11 @@ func (s *boolField) ResolveReferences(n *Namespace) error {
 
 func (s *boolField) Schema(names map[QualifiedName]interface{}) interface{} {
 	return "boolean"
+}
+
+func (s *boolField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

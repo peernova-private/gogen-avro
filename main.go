@@ -7,9 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/alanctgardner/gogen-avro/generator"
-	"github.com/alanctgardner/gogen-avro/types"
+	"github.com/peernova-private/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/types"
 )
 
 func main() {

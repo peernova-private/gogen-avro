@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
 )
 
 const unionSerializerTemplate = `
@@ -40,6 +40,7 @@ type unionField struct {
 	hasDefault   bool
 	defaultValue interface{}
 	itemType     []Field
+	tag          string
 }
 
 func (s *unionField) HasDefault() bool {
@@ -166,4 +167,11 @@ func (s *unionField) Schema(names map[QualifiedName]interface{}) interface{} {
 		unionDefs = append(unionDefs, item.Schema(names))
 	}
 	return unionDefs
+}
+
+func (s *unionField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

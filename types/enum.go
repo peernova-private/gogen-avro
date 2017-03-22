@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
 )
 
 const enumTypeDef = `
@@ -40,6 +40,7 @@ type EnumDefinition struct {
 	aliases  []QualifiedName
 	symbols  []string
 	metadata map[string]interface{}
+	tag      string
 }
 
 func (e *EnumDefinition) AvroName() QualifiedName {
@@ -136,4 +137,11 @@ func (s *EnumDefinition) Schema(names map[QualifiedName]interface{}) interface{}
 		"name":    name,
 		"symbols": s.symbols,
 	}, s.metadata)
+}
+
+func (s *EnumDefinition) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

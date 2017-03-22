@@ -1,7 +1,8 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
+	"fmt"
 )
 
 const writeDoubleMethod = `
@@ -29,6 +30,7 @@ type doubleField struct {
 	name         string
 	defaultValue float64
 	hasDefault   bool
+	tag          string
 }
 
 func (s *doubleField) AvroName() string {
@@ -52,7 +54,7 @@ func (s *doubleField) FieldType() string {
 }
 
 func (s *doubleField) GoType() string {
-	return "float64"
+	return fmt.Sprintf("float64%s", s.Tag())
 }
 
 func (s *doubleField) SerializerMethod() string {
@@ -86,4 +88,11 @@ func (s *doubleField) ResolveReferences(n *Namespace) error {
 
 func (s *doubleField) Schema(names map[QualifiedName]interface{}) interface{} {
 	return "double"
+}
+
+func (s *doubleField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

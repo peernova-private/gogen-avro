@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
 )
 
 const arraySerializerTemplate = `
@@ -59,6 +59,7 @@ type arrayField struct {
 	hasDefault   bool
 	defaultValue interface{}
 	metadata     map[string]interface{}
+	tag          string
 }
 
 func (s *arrayField) AvroName() string {
@@ -82,7 +83,7 @@ func (s *arrayField) FieldType() string {
 }
 
 func (s *arrayField) GoType() string {
-	return fmt.Sprintf("[]%v", s.itemType.GoType())
+	return fmt.Sprintf("[]%v%s", s.itemType.GoType(), s.Tag())
 }
 
 func (s *arrayField) SerializerMethod() string {
@@ -128,4 +129,11 @@ func (s *arrayField) Schema(names map[QualifiedName]interface{}) interface{} {
 		"type":  "array",
 		"items": s.itemType.Schema(names),
 	}, s.metadata)
+}
+
+func (s *arrayField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

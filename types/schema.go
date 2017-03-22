@@ -89,7 +89,7 @@ func (n *Namespace) FieldDefinitionForSchema(schemaJson []byte) (Field, error) {
 		return nil, err
 	}
 
-	field, err := n.decodeFieldDefinitionType("", "", schema, nil, false)
+	field, err := n.decodeFieldDefinitionType("", "", schema, nil, false, "")
 	if err != nil {
 		return nil, err
 	}
@@ -98,15 +98,15 @@ func (n *Namespace) FieldDefinitionForSchema(schemaJson []byte) (Field, error) {
 	return field, nil
 }
 
-func (n *Namespace) decodeFieldDefinitionType(namespace, nameStr string, t, def interface{}, hasDef bool) (Field, error) {
+func (n *Namespace) decodeFieldDefinitionType(namespace, nameStr string, t, def interface{}, hasDef bool, tag string) (Field, error) {
 	switch t.(type) {
 	case string:
 		typeStr := t.(string)
-		return n.createFieldStruct(namespace, nameStr, typeStr, def, hasDef)
+		return n.createFieldStruct(namespace, nameStr, typeStr, def, hasDef, tag)
 	case []interface{}:
-		return n.decodeUnionDefinition(namespace, nameStr, def, hasDef, t.([]interface{}))
+		return n.decodeUnionDefinition(namespace, nameStr, def, hasDef, t.([]interface{}), tag)
 	case map[string]interface{}:
-		return n.decodeComplexDefinition(namespace, nameStr, t.(map[string]interface{}), def, hasDef)
+		return n.decodeComplexDefinition(namespace, nameStr, t.(map[string]interface{}), def, hasDef, tag)
 	}
 	return nil, NewSchemaError(nameStr, NewWrongMapValueTypeError("type", "array, string, map", t))
 }
@@ -114,7 +114,7 @@ func (n *Namespace) decodeFieldDefinitionType(namespace, nameStr string, t, def 
 /*
    Given a map representing a record definition, validate the definition and build the RecordDefinition struct.
 */
-func (n *Namespace) decodeRecordDefinition(namespace string, schemaMap map[string]interface{}) (Definition, error) {
+func (n *Namespace) decodeRecordDefinition(namespace string, schemaMap map[string]interface{}, tag string) (Definition, error) {
 	typeStr, err := getMapString(schemaMap, "type")
 	if err != nil {
 		return nil, err
@@ -156,7 +156,12 @@ func (n *Namespace) decodeRecordDefinition(namespace string, schemaMap map[strin
 			return nil, NewRequiredMapKeyError("type")
 		}
 		def, hasDef := field["default"]
-		fieldStruct, err := n.decodeFieldDefinitionType(namespace, fieldName, t, def, hasDef)
+		tag := ""
+		m, ok := field["tag"]
+		if ok {
+			tag = m.(string)
+		}
+		fieldStruct, err := n.decodeFieldDefinitionType(namespace, fieldName, t, def, hasDef, tag)
 		if err != nil {
 			return nil, err
 		}
@@ -174,12 +179,13 @@ func (n *Namespace) decodeRecordDefinition(namespace string, schemaMap map[strin
 		aliases:  aliases,
 		fields:   decodedFields,
 		metadata: schemaMap,
+		tag:      tag,
 	}, nil
 }
 
 /* Given a map representing an enum definition, validate the definition and build the EnumDefinition struct.
  */
-func (n *Namespace) decodeEnumDefinition(namespace string, schemaMap map[string]interface{}) (Definition, error) {
+func (n *Namespace) decodeEnumDefinition(namespace string, schemaMap map[string]interface{}, tag string) (Definition, error) {
 	typeStr, err := getMapString(schemaMap, "type")
 	if err != nil {
 		return nil, err
@@ -221,11 +227,12 @@ func (n *Namespace) decodeEnumDefinition(namespace string, schemaMap map[string]
 		aliases:  aliases,
 		symbols:  symbolStr,
 		metadata: schemaMap,
+		tag:      tag,
 	}, nil
 }
 
 /* Given a map representing a fixed definition, validate the definition and build the FixedDefinition struct. */
-func (n *Namespace) decodeFixedDefinition(namespace string, schemaMap map[string]interface{}) (Definition, error) {
+func (n *Namespace) decodeFixedDefinition(namespace string, schemaMap map[string]interface{}, tag string) (Definition, error) {
 	typeStr, err := getMapString(schemaMap, "type")
 	if err != nil {
 		return nil, err
@@ -262,18 +269,19 @@ func (n *Namespace) decodeFixedDefinition(namespace string, schemaMap map[string
 		aliases:   aliases,
 		sizeBytes: int(sizeBytes),
 		metadata:  schemaMap,
+		tag:       tag,
 	}, nil
 }
 
-func (n *Namespace) decodeUnionDefinition(namespace, nameStr string, def interface{}, hasDef bool, FieldList []interface{}) (Field, error) {
+func (n *Namespace) decodeUnionDefinition(namespace, nameStr string, def interface{}, hasDef bool, FieldList []interface{}, tag string) (Field, error) {
 	unionFields := make([]Field, 0)
 	for i, f := range FieldList {
 		var fieldDef Field
 		var err error
 		if i == 0 {
-			fieldDef, err = n.decodeFieldDefinitionType(namespace, "", f, nil, false)
+			fieldDef, err = n.decodeFieldDefinitionType(namespace, "", f, nil, false, tag)
 		} else {
-			fieldDef, err = n.decodeFieldDefinitionType(namespace, "", f, nil, false)
+			fieldDef, err = n.decodeFieldDefinitionType(namespace, "", f, nil, false, tag)
 		}
 		if err != nil {
 			return nil, err
@@ -285,10 +293,11 @@ func (n *Namespace) decodeUnionDefinition(namespace, nameStr string, def interfa
 		hasDefault:   hasDef,
 		defaultValue: def,
 		itemType:     unionFields,
+		tag:          tag,
 	}, nil
 }
 
-func (n *Namespace) decodeComplexDefinition(namespace, nameStr string, typeMap map[string]interface{}, def interface{}, hasDef bool) (Field, error) {
+func (n *Namespace) decodeComplexDefinition(namespace, nameStr string, typeMap map[string]interface{}, def interface{}, hasDef bool, tag string) (Field, error) {
 	typeStr, err := getMapString(typeMap, "type")
 	if err != nil {
 		return nil, NewSchemaError(nameStr, err)
@@ -299,7 +308,7 @@ func (n *Namespace) decodeComplexDefinition(namespace, nameStr string, typeMap m
 		if !ok {
 			return nil, NewSchemaError(nameStr, NewRequiredMapKeyError("items"))
 		}
-		fieldType, err := n.decodeFieldDefinitionType(namespace, "", items, nil, false)
+		fieldType, err := n.decodeFieldDefinitionType(namespace, "", items, nil, false, tag)
 		if err != nil {
 			return nil, NewSchemaError(nameStr, err)
 		}
@@ -309,13 +318,14 @@ func (n *Namespace) decodeComplexDefinition(namespace, nameStr string, typeMap m
 			hasDefault:   hasDef,
 			defaultValue: def,
 			metadata:     typeMap,
+			tag:          tag,
 		}, nil
 	case "map":
 		values, ok := typeMap["values"]
 		if !ok {
 			return nil, NewSchemaError(nameStr, NewRequiredMapKeyError("values"))
 		}
-		fieldType, err := n.decodeFieldDefinitionType(namespace, "", values, nil, false)
+		fieldType, err := n.decodeFieldDefinitionType(namespace, "", values, nil, false, tag)
 		if err != nil {
 			return nil, NewSchemaError(nameStr, err)
 		}
@@ -325,9 +335,10 @@ func (n *Namespace) decodeComplexDefinition(namespace, nameStr string, typeMap m
 			hasDefault:   hasDef,
 			defaultValue: def,
 			metadata:     typeMap,
+			tag:          tag,
 		}, nil
 	case "enum":
-		definition, err := n.decodeEnumDefinition(namespace, typeMap)
+		definition, err := n.decodeEnumDefinition(namespace, typeMap, tag)
 		if err != nil {
 			return nil, NewSchemaError(nameStr, err)
 		}
@@ -341,9 +352,10 @@ func (n *Namespace) decodeComplexDefinition(namespace, nameStr string, typeMap m
 			def:          nil,
 			defaultValue: def,
 			hasDefault:   hasDef,
+			tag:          tag,
 		}, nil
 	case "fixed":
-		definition, err := n.decodeFixedDefinition(namespace, typeMap)
+		definition, err := n.decodeFixedDefinition(namespace, typeMap, tag)
 		if err != nil {
 			return nil, NewSchemaError(nameStr, err)
 		}
@@ -357,9 +369,10 @@ func (n *Namespace) decodeComplexDefinition(namespace, nameStr string, typeMap m
 			def:          nil,
 			defaultValue: def,
 			hasDefault:   hasDef,
+			tag:          tag,
 		}, nil
 	case "record":
-		definition, err := n.decodeRecordDefinition(namespace, typeMap)
+		definition, err := n.decodeRecordDefinition(namespace, typeMap, tag)
 		if err != nil {
 			return nil, NewSchemaError(nameStr, err)
 		}
@@ -373,13 +386,14 @@ func (n *Namespace) decodeComplexDefinition(namespace, nameStr string, typeMap m
 			def:          nil,
 			defaultValue: def,
 			hasDefault:   hasDef,
+			tag:          tag,
 		}, nil
 	default:
 		return nil, NewSchemaError(nameStr, fmt.Errorf("Unknown type name %v", typeStr))
 	}
 }
 
-func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def interface{}, hasDef bool) (Field, error) {
+func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def interface{}, hasDef bool, tag string) (Field, error) {
 	switch typeStr {
 	case "string":
 		var defStr string
@@ -391,7 +405,7 @@ func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def in
 			}
 
 		}
-		return &stringField{nameStr, defStr, hasDef}, nil
+		return &stringField{nameStr, defStr, hasDef, tag}, nil
 	case "int":
 		var defInt int32
 		if hasDef {
@@ -402,7 +416,7 @@ func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def in
 			defInt = int32(defFloat)
 
 		}
-		return &intField{nameStr, defInt, hasDef}, nil
+		return &intField{nameStr, defInt, hasDef, tag}, nil
 	case "long":
 		var defInt int64
 		if hasDef {
@@ -412,7 +426,7 @@ func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def in
 			}
 			defInt = int64(defFloat)
 		}
-		return &longField{nameStr, defInt, hasDef}, nil
+		return &longField{nameStr, defInt, hasDef, tag}, nil
 	case "float":
 		var defFloat float64
 		var ok bool
@@ -422,7 +436,7 @@ func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def in
 				return nil, fmt.Errorf("Field %q default must be float type", nameStr)
 			}
 		}
-		return &floatField{nameStr, float32(defFloat), hasDef}, nil
+		return &floatField{nameStr, float32(defFloat), hasDef, tag}, nil
 	case "double":
 		var defFloat float64
 		var ok bool
@@ -432,7 +446,7 @@ func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def in
 				return nil, fmt.Errorf("Field %q default must be float type", nameStr)
 			}
 		}
-		return &doubleField{nameStr, defFloat, hasDef}, nil
+		return &doubleField{nameStr, defFloat, hasDef, tag}, nil
 	case "boolean":
 		var defBool bool
 		var ok bool
@@ -443,7 +457,7 @@ func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def in
 			}
 
 		}
-		return &boolField{nameStr, defBool, hasDef}, nil
+		return &boolField{nameStr, defBool, hasDef, tag}, nil
 	case "bytes":
 		var defBytes []byte
 		if hasDef {
@@ -453,9 +467,9 @@ func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def in
 			}
 			defBytes = []byte(defString)
 		}
-		return &bytesField{nameStr, defBytes, hasDef}, nil
+		return &bytesField{nameStr, defBytes, hasDef, tag}, nil
 	case "null":
-		return &nullField{nameStr, hasDef}, nil
+		return &nullField{nameStr, hasDef, tag}, nil
 	default:
 		return &Reference{
 			name:         nameStr,
@@ -463,6 +477,7 @@ func (n *Namespace) createFieldStruct(namespace, nameStr, typeStr string, def in
 			def:          nil,
 			defaultValue: def,
 			hasDefault:   hasDef,
+			tag:          tag,
 		}, nil
 	}
 }

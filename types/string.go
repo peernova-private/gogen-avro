@@ -1,7 +1,8 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
+	"fmt"
 )
 
 const stringWriterInterface = `
@@ -44,6 +45,7 @@ type stringField struct {
 	name         string
 	defaultValue string
 	hasDefault   bool
+	tag			 string
 }
 
 func (s *stringField) HasDefault() bool {
@@ -67,7 +69,7 @@ func (s *stringField) FieldType() string {
 }
 
 func (s *stringField) GoType() string {
-	return "string"
+	return fmt.Sprintf("string%s", s.Tag())
 }
 
 func (s *stringField) SerializerMethod() string {
@@ -101,4 +103,11 @@ func (s *stringField) ResolveReferences(n *Namespace) error {
 
 func (s *stringField) Schema(names map[QualifiedName]interface{}) interface{} {
 	return "string"
+}
+
+func (s *stringField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

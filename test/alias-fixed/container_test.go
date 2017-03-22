@@ -2,7 +2,7 @@ package avro
 
 import (
 	"bytes"
-	"github.com/alanctgardner/gogen-avro/container"
+	"github.com/peernova-private/gogen-avro/container"
 	"github.com/linkedin/goavro"
 	"testing"
 )

@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
 )
 
 const mapSerializerTemplate = `
@@ -65,6 +65,7 @@ type mapField struct {
 	hasDefault   bool
 	defaultValue interface{}
 	metadata     map[string]interface{}
+	tag          string
 }
 
 func (s *mapField) HasDefault() bool {
@@ -139,4 +140,11 @@ func (s *mapField) Schema(names map[QualifiedName]interface{}) interface{} {
 		"type":   "map",
 		"values": s.itemType.Schema(names),
 	}, s.metadata)
+}
+
+func (s *mapField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

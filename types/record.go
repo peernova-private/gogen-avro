@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
 	"strconv"
 )
 
@@ -43,6 +43,7 @@ type RecordDefinition struct {
 	aliases  []QualifiedName
 	fields   []Field
 	metadata map[string]interface{}
+	tag      string
 }
 
 func (r *RecordDefinition) AvroName() QualifiedName {
@@ -194,4 +195,11 @@ func (r *RecordDefinition) Schema(names map[QualifiedName]interface{}) interface
 		"name":   name,
 		"fields": fields,
 	}, r.metadata)
+}
+
+func (r *RecordDefinition) Tag() string {
+	if len(r.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", r.tag)
 }

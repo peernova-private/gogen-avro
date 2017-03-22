@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
 )
 
 /*
@@ -27,4 +27,5 @@ type Definition interface {
 	AddDeserializer(*generator.Package)
 	ResolveReferences(*Namespace) error
 	Schema(names map[QualifiedName]interface{}) interface{}
+	Tag() string
 }

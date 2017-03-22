@@ -1,7 +1,8 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
+	"fmt"
 )
 
 const writeIntMethod = `
@@ -84,6 +85,7 @@ type intField struct {
 	name         string
 	defaultValue int32
 	hasDefault   bool
+	tag          string
 }
 
 func (s *intField) HasDefault() bool {
@@ -107,7 +109,7 @@ func (s *intField) FieldType() string {
 }
 
 func (s *intField) GoType() string {
-	return "int32"
+	return fmt.Sprintf("int32%s", s.Tag())
 }
 
 func (s *intField) SerializerMethod() string {
@@ -138,4 +140,11 @@ func (s *intField) ResolveReferences(n *Namespace) error {
 
 func (s *intField) Schema(names map[QualifiedName]interface{}) interface{} {
 	return "int"
+}
+
+func (s *intField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

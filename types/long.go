@@ -1,7 +1,8 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
+	"fmt"
 )
 
 const writeLongMethod = `
@@ -36,6 +37,7 @@ type longField struct {
 	name         string
 	defaultValue int64
 	hasDefault   bool
+	tag			 string
 }
 
 func (s *longField) AvroName() string {
@@ -59,7 +61,7 @@ func (s *longField) FieldType() string {
 }
 
 func (s *longField) GoType() string {
-	return "int64"
+	return fmt.Sprintf("int64%s", s.Tag())
 }
 
 func (s *longField) SerializerMethod() string {
@@ -90,4 +92,11 @@ func (s *longField) ResolveReferences(n *Namespace) error {
 
 func (s *longField) Schema(names map[QualifiedName]interface{}) interface{} {
 	return "long"
+}
+
+func (s *longField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }

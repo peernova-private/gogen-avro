@@ -1,7 +1,8 @@
 package types
 
 import (
-	"github.com/alanctgardner/gogen-avro/generator"
+	"github.com/peernova-private/gogen-avro/generator"
+	"fmt"
 )
 
 const writeBytesMethod = `
@@ -31,6 +32,7 @@ type bytesField struct {
 	name         string
 	defaultValue []byte
 	hasDefault   bool
+	tag          string
 }
 
 func (s *bytesField) AvroName() string {
@@ -54,7 +56,7 @@ func (s *bytesField) FieldType() string {
 }
 
 func (s *bytesField) GoType() string {
-	return "[]byte"
+	return fmt.Sprintf("[]byte%s", s.Tag())
 }
 
 func (s *bytesField) SerializerMethod() string {
@@ -87,4 +89,11 @@ func (s *bytesField) ResolveReferences(n *Namespace) error {
 
 func (s *bytesField) Schema(names map[QualifiedName]interface{}) interface{} {
 	return "bytes"
+}
+
+func (s *bytesField) Tag() string {
+	if len(s.tag) < 1 {
+		return ""
+	}
+	return fmt.Sprintf(" `%s`", s.tag)
 }
